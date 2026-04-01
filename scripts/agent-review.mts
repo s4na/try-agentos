@@ -50,15 +50,16 @@ async function main() {
     },
   });
 
-  // イベントを収集
+  // イベントを収集（JsonRpcNotification 構造: { jsonrpc, method, params }）
   let reviewOutput = "";
-  vm.onSessionEvent(sessionId, (event: any) => {
-    // テキスト出力イベントを収集（イベント構造は実際の API に合わせて調整すること）
-    if (event.type === "text" || event.type === "output") {
-      reviewOutput += event.text ?? event.data ?? "";
+  const unsubscribe = vm.onSessionEvent(sessionId, (event) => {
+    if (process.env.DEBUG) {
+      console.log(`[event] ${event.method}`, JSON.stringify(event.params));
     }
-    // デバッグ用
-    console.log(JSON.stringify(event));
+    const params = event.params as Record<string, unknown> | undefined;
+    if (params?.text && typeof params.text === "string") {
+      reviewOutput += params.text;
+    }
   });
 
   // プロンプトを送信
@@ -69,11 +70,27 @@ async function main() {
 ${diff}
 \`\`\``;
 
-  await vm.prompt(sessionId, prompt);
+  const response = await vm.prompt(sessionId, prompt);
 
-  // セッション終了・VM 破棄
-  vm.closeSession(sessionId);
-  await vm.dispose();
+  // prompt() の戻り値（JsonRpcResponse）からもテキストを取得
+  if (response.result && !reviewOutput.trim()) {
+    const result = response.result as Record<string, unknown>;
+    if (typeof result.text === "string") {
+      reviewOutput = result.text;
+    } else if (typeof result === "string") {
+      reviewOutput = result;
+    } else {
+      reviewOutput = JSON.stringify(result);
+    }
+  }
+
+  // イベント購読解除・セッション終了・VM 破棄
+  unsubscribe();
+  try {
+    await vm.destroySession(sessionId);
+  } finally {
+    await vm.dispose();
+  }
 
   // --- GitHub にコメント投稿 ---
   if (reviewOutput.trim()) {
