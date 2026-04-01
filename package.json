@@ -1,0 +1,26 @@
+{
+  "name": "try-agentos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:37973/git/s4na/try-agentos"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@rivet-dev/agent-os-common": "^0.0.260331072558",
+    "@rivet-dev/agent-os-core": "^0.1.0",
+    "@rivet-dev/agent-os-pi": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
